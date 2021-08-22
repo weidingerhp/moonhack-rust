@@ -3,7 +3,7 @@ use bevy;
 use bevy::math::{Vec2, Vec3};
 use bevy::prelude::{*};
 use bevy::sprite::{ColorMaterial, TextureAtlas};
-use lunar_lander::{LanderStart, LunarLander, LunarStartBundle};
+use lunar_lander::LunarLander;
 use wasm_bindgen::prelude::*;
 pub mod lunar_lander;
 
@@ -91,8 +91,4 @@ fn spawn_background(
         },
         ..Default::default()
     });
-    
-    commands.spawn_bundle(LunarStartBundle {
-        should_start: true,
-    }).insert(LanderStart);
 }

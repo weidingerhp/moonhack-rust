@@ -2,11 +2,6 @@ use bevy_kira_audio::Audio;
 use bevy::prelude::{*};
 use crate::{AudioChannels, GameAssets};
 
-#[derive(Bundle)]
-pub struct LunarStartBundle {
-    pub should_start: bool,
-}
-
 pub struct LanderStart;
 
 pub struct LunarLanderProperties {
@@ -20,10 +15,9 @@ pub struct LunarLander;
 impl Plugin for LunarLander {
     fn build(&self, app: &mut AppBuilder) {
         app
-            .add_system(lander_start.system())
+            .add_startup_stage("spawn_lander", SystemStage::single(spawn_lander.system()))
             .add_system(lander_input.system())
             .add_system(lander_run.system());
- 
     }
 }
 
@@ -48,20 +42,6 @@ fn spawn_lander(
         fuel: 100.,
         touchdown: false,
     });
-}
-
-fn lander_start(
-    mut commands: Commands,
-    game_assets: Res<GameAssets>,
-    query: Query<Entity, With<LanderStart>>
-) 
-{
-    if let Ok(entity) = query.single() {
-        commands.entity(entity).despawn();
-        spawn_lander(commands, game_assets);
-        println!("Spawned LunarLander");
-    }
-
 }
 
 fn lander_run(
@@ -98,6 +78,7 @@ fn lander_run(
 
 fn lander_input(
     keyboard: Res<Input<KeyCode>>,
+    mouse_button_input_events: Res<Input<MouseButton>>,
     audio: Res<Audio>,
     audiochannels: Res<AudioChannels>,
     game_assets: Res<GameAssets>,
@@ -110,7 +91,7 @@ fn lander_input(
             return;
         }
         
-        if keyboard.pressed(KeyCode::Space) {
+        if keyboard.pressed(KeyCode::Space) || mouse_button_input_events.pressed(MouseButton::Left) {
             sprite.index = 1;
             properties.velocity -= 0.1;
         } else {
@@ -118,11 +99,12 @@ fn lander_input(
             properties.velocity += 0.03;
         }
 
+        
         // just for audio
-        if keyboard.just_pressed(KeyCode::Space) {
+        if keyboard.just_pressed(KeyCode::Space) || mouse_button_input_events.just_pressed(MouseButton::Left) {
             audio.play_looped_in_channel(game_assets.sound_thruster.clone(), &audiochannels.thruster);
         }
-        if keyboard.just_released(KeyCode::Space) {
+        if keyboard.just_released(KeyCode::Space) || mouse_button_input_events.just_released(MouseButton::Left) {
         audio.stop_channel(&audiochannels.thruster);
         }
 
