@@ -3,6 +3,7 @@ name = "moonhack-rust"
 version = "0.1.0"
 authors = ["weidinger.hp <weidinger.hp@gmail.com>"]
 edition = "2018"
+resolver = "2"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -20,4 +21,4 @@ crate-type = ["cdylib", "rlib"]
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 bevy = {version = "0.5.0", default-features = false, features = ["bevy_winit", "render", "bevy_gltf", "png" ]}
-bevy_webgl2 = { version = "0.5.0", optional = true }
+bevy_webgl2 = "0.5.0"
