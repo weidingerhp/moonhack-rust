@@ -7,6 +7,10 @@ resolver = "2"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[profile.release]
+lto = "thin"
+opt-level = 's'
+
 [dependencies]
 bevy_kira_audio = {version = "0.5.0", default-features = false, features = ["ogg"] }
 wasm-bindgen = "0.2"
@@ -22,3 +26,4 @@ crate-type = ["cdylib", "rlib"]
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 bevy = {version = "0.5.0", default-features = false, features = ["bevy_winit", "render", "bevy_gltf", "png" ]}
 bevy_webgl2 = "0.5.0"
+
