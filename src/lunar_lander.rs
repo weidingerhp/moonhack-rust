@@ -8,6 +8,7 @@ pub struct LunarLanderProperties {
     pub velocity: f32,
     pub fuel: f32,
     pub touchdown: bool,
+    pub thrusting: bool,
 }
 
 pub struct LunarLander;
@@ -41,6 +42,7 @@ fn spawn_lander(
         velocity: 2.,
         fuel: 100.,
         touchdown: false,
+        thrusting: false,
     });
 }
 
@@ -91,22 +93,22 @@ fn lander_input(
             return;
         }
         
-        if keyboard.pressed(KeyCode::Space) || mouse_button_input_events.pressed(MouseButton::Left) {
-            sprite.index = 1;
+        if (keyboard.pressed(KeyCode::Space) || mouse_button_input_events.pressed(MouseButton::Left)) && (properties.fuel > 0.) {
+            if !properties.thrusting {
+                sprite.index = 1;
+                audio.play_looped_in_channel(game_assets.sound_thruster.clone(), &audiochannels.thruster);
+            }
             properties.velocity -= 0.1;
+            properties.thrusting = true;
         } else {
-            sprite.index = 0;
+            if properties.thrusting {
+                sprite.index = 0;
+                audio.stop_channel(&audiochannels.thruster);
+            }
             properties.velocity += 0.03;
+            properties.thrusting = false;
         }
-
-        
-        // just for audio
-        if keyboard.just_pressed(KeyCode::Space) || mouse_button_input_events.just_pressed(MouseButton::Left) {
-            audio.play_looped_in_channel(game_assets.sound_thruster.clone(), &audiochannels.thruster);
-        }
-        if keyboard.just_released(KeyCode::Space) || mouse_button_input_events.just_released(MouseButton::Left) {
-        audio.stop_channel(&audiochannels.thruster);
-        }
-
     }
 }
+
+
