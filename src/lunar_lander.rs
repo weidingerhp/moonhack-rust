@@ -4,6 +4,8 @@ use crate::{AudioChannels, GameAssets};
 
 pub struct LanderStart;
 
+pub struct Explosion;
+
 pub struct LunarLanderProperties {
     pub velocity: f32,
     pub fuel: f32,
@@ -18,7 +20,8 @@ impl Plugin for LunarLander {
         app
             .add_startup_stage("spawn_lander", SystemStage::single(spawn_lander.system()))
             .add_system(lander_input.system())
-            .add_system(lander_run.system());
+            .add_system(lander_run.system())
+            .add_system(explode_lander.system());
     }
 }
 
@@ -47,6 +50,7 @@ fn spawn_lander(
 }
 
 fn lander_run(
+    mut commands: Commands,
     audio: Res<Audio>,
     audiochannels: Res<AudioChannels>,
     game_assets: Res<GameAssets>,
@@ -64,7 +68,23 @@ fn lander_run(
             if properties.velocity > 1. {
                 sprite.index = 2;
                 println!("crashed");
+
+                let mut explosion_translation = transform.translation.clone();
+                explosion_translation.z += 1.;
+
                 audio.play_in_channel(game_assets.sound_crashed.clone(), &audiochannels.radio);
+                commands.spawn_bundle( SpriteSheetBundle {
+                    texture_atlas: game_assets.explosion.clone(),
+                    transform: Transform {
+                        translation: explosion_translation,
+                        scale: Vec3::new(1., 1., 1.),
+                        ..Default::default()
+                    },
+                ..Default::default()
+                })
+                .insert(Explosion)
+                .insert(Timer::from_seconds(0.1, true));
+
             } else {
                 sprite.index = 0;
                 println!("Landed sucessfully");
@@ -107,6 +127,24 @@ fn lander_input(
             }
             properties.velocity += 0.03;
             properties.thrusting = false;
+        }
+    }
+}
+
+fn explode_lander(
+    mut commands: Commands,
+    time: Res<Time>,
+    mut query: Query<(Entity, &mut TextureAtlasSprite, &mut Timer), With<Explosion>>
+) {
+
+    for (entity, mut sprite, mut timer) in query.iter_mut() {
+        timer.tick(time.delta());
+        if timer.just_finished() {
+            if sprite.index >= 9 {
+                commands.entity(entity).despawn();
+            } else {
+                sprite.index += 1;
+            }
         }
     }
 }

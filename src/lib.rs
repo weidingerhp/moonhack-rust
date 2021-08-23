@@ -13,12 +13,14 @@ struct GameAssets {
     sound_thruster: Handle<AudioSource>,
     sound_landed: Handle<AudioSource>,
     sound_crashed: Handle<AudioSource>,
+    explosion: Handle<TextureAtlas>,
 }
 
 impl GameAssets {
     fn new(mut materials: ResMut<Assets<ColorMaterial>>, mut texture_atlases: ResMut<Assets<TextureAtlas>>, asset_server: Res<AssetServer>) -> Self { 
 
         let lunar_lander_handle = asset_server.load("lunar_module_map.png");
+        let explosion = asset_server.load("explosion.png");
         
         Self { 
             background: materials.add(asset_server.load("background.png").into()), 
@@ -26,6 +28,7 @@ impl GameAssets {
             sound_thruster: asset_server.load("thrusters.ogg").into(), 
             sound_landed: asset_server.load("landed.ogg").into(), 
             sound_crashed: asset_server.load("problem.ogg").into(), 
+            explosion: texture_atlases.add(TextureAtlas::from_grid(explosion, Vec2::new(64.,64.), 10, 1)),
         } 
     }
 }
