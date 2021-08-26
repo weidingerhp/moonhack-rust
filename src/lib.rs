@@ -4,16 +4,19 @@ use bevy::math::{Vec2, Vec3};
 use bevy::prelude::{*};
 use bevy::sprite::{ColorMaterial, TextureAtlas};
 use lunar_lander::LunarLander;
+use ui::UIPlugin;
 use wasm_bindgen::prelude::*;
 pub mod lunar_lander;
+pub mod ui;
 
-struct GameAssets {
+pub struct GameAssets {
     background: Handle<ColorMaterial>,
     lunar_module: Handle<TextureAtlas>,
     sound_thruster: Handle<AudioSource>,
     sound_landed: Handle<AudioSource>,
     sound_crashed: Handle<AudioSource>,
     explosion: Handle<TextureAtlas>,
+    button: Handle<ColorMaterial>,
 }
 
 impl GameAssets {
@@ -29,6 +32,7 @@ impl GameAssets {
             sound_landed: asset_server.load("landed.ogg").into(), 
             sound_crashed: asset_server.load("problem.ogg").into(), 
             explosion: texture_atlases.add(TextureAtlas::from_grid(explosion, Vec2::new(64.,64.), 10, 1)),
+            button: materials.add(asset_server.load("button_start.png").into()),
         } 
     }
 }
@@ -52,7 +56,7 @@ pub fn run() {
     let mut app = App::build();
     app.insert_resource(ClearColor(Color::rgb(0.04, 0.04, 0.04)))
         .insert_resource(WindowDescriptor {
-            title: "CoderDojo MoonHack".to_string(),
+            title: "CoderDojo MoonHack".to_owned(),
             width: 640.,
             height: 480.,
             scale_factor_override: Some(1.5),
@@ -62,8 +66,10 @@ pub fn run() {
         .add_plugins(DefaultPlugins)
         .add_plugin(AudioPlugin)
         .add_plugin(LunarLander)
+        .add_plugin(UIPlugin)
         .add_startup_system(setup.system())
-        .add_startup_stage("background", SystemStage::single(spawn_background.system()));
+        .add_startup_stage("background", SystemStage::single(spawn_background.system()))
+        ;
 
         #[cfg(target_arch = "wasm32")]
         app.add_plugin(bevy_webgl2::WebGL2Plugin);
@@ -78,6 +84,7 @@ fn setup(
     materials: ResMut<Assets<ColorMaterial>>
 ) {
     commands.spawn_bundle(OrthographicCameraBundle::new_2d());
+    //commands.spawn_bundle(UiCameraBundle::default());
     commands.insert_resource(GameAssets::new(materials, texture_atlases, asset_server));
 }
 

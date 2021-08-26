@@ -1,6 +1,6 @@
 use bevy_kira_audio::Audio;
 use bevy::prelude::{*};
-use crate::{AudioChannels, GameAssets};
+use crate::{AudioChannels, GameAssets, ui::start_ui};
 
 pub struct LanderStart;
 
@@ -18,14 +18,14 @@ pub struct LunarLander;
 impl Plugin for LunarLander {
     fn build(&self, app: &mut AppBuilder) {
         app
-            .add_startup_stage("spawn_lander", SystemStage::single(spawn_lander.system()))
+            //.add_startup_stage("spawn_lander", SystemStage::single(spawn_lander.system()))
             .add_system(lander_input.system())
             .add_system(lander_run.system())
             .add_system(explode_lander.system());
     }
 }
 
-fn spawn_lander(
+pub fn spawn_lander(
     mut commands: Commands,
     game_assets: Res<GameAssets>
 ) 
@@ -49,14 +49,40 @@ fn spawn_lander(
     });
 }
 
+fn remove_old_landers_if_needed(
+    commands: &mut Commands,
+    query: &mut Query<(&mut LunarLanderProperties, &mut TextureAtlasSprite, &mut Transform, Entity), With<LunarLander> >    
+) -> bool {
+    let mut landers = 0;
+    // check if there are two landers and remove all the landed ones ....
+    query.iter_mut().for_each(|(_, _, _, _)| {
+        landers += 1;
+    });
+
+    if landers > 1 {
+        query.iter_mut().for_each(|(properties, _, _, entity)| {
+            if properties.touchdown {
+                commands.entity(entity).despawn();
+            }
+        });
+        return true;
+    }
+
+    return false;
+}
+
 fn lander_run(
     mut commands: Commands,
     audio: Res<Audio>,
     audiochannels: Res<AudioChannels>,
     game_assets: Res<GameAssets>,
-    mut query: Query<(&mut LunarLanderProperties, &mut TextureAtlasSprite, &mut Transform), With<LunarLander> >    
+    mut query: Query<(&mut LunarLanderProperties, &mut TextureAtlasSprite, &mut Transform, Entity), With<LunarLander> >    
 ) {
-    if let Ok((mut properties, mut sprite, mut transform)) = query.single_mut() {
+    if remove_old_landers_if_needed(&mut commands, &mut query) {
+        return;
+    }
+
+    if let Ok((mut properties, mut sprite, mut transform, _)) = query.single_mut() {
         if properties.touchdown {
             return;
         }
@@ -67,7 +93,6 @@ fn lander_run(
 
             if properties.velocity > 1. {
                 sprite.index = 2;
-                println!("crashed");
 
                 let mut explosion_translation = transform.translation.clone();
                 explosion_translation.z += 1.;
@@ -87,9 +112,10 @@ fn lander_run(
 
             } else {
                 sprite.index = 0;
-                println!("Landed sucessfully");
                 audio.play_in_channel(game_assets.sound_landed.clone(), &audiochannels.radio);
             }
+
+            start_ui(commands, game_assets);
             return;
         }
 
